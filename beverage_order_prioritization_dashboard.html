@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Beverage Order Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 :root{
   --navy:#102a35; --teal:#0b4d4a; --green:#39a96b; --light:#f4f7f8;
@@ -49,6 +50,29 @@ body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--light
 .pager{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;font-size:13px;color:var(--muted)}
 .pager button:disabled{opacity:.45;cursor:default}
 .empty{padding:36px 12px;text-align:center;color:var(--muted)}
+.view{display:none}.view.active{display:block}
+.analytics{display:flex;flex-direction:column;gap:16px}
+.section-card{padding:20px 22px}
+.section-card h3{margin:0 0 4px;font-size:17px}
+.section-card .lede{margin:0 0 14px;color:var(--muted);font-size:13px}
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.kpi{padding:16px}
+.kpi-label{font-size:13px;color:#233844}
+.kpi-value{font-size:28px;font-weight:800;margin-top:8px}
+.kpi-sub{font-size:12px;color:var(--muted);margin-top:6px}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.chart-grid.is-hidden{display:none}
+.chart-box{position:relative;height:280px}
+.chart-box.wide{height:320px;margin-top:14px}
+.channel-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.channel-tile{border:1px solid var(--border);background:#f7fafb;border-radius:10px;padding:12px 14px;text-align:left;cursor:pointer;font:inherit;color:var(--text)}
+.channel-tile:hover{border-color:#9bb5b3;background:#fff}
+.channel-tile.active{border-color:#07594f;background:#e8f3f1;box-shadow:inset 0 0 0 1px #07594f}
+.channel-tile .tile-label{display:block;font-size:13px;font-weight:700}
+.channel-tile .tile-value{display:block;font-size:20px;font-weight:800;margin-top:6px}
+.channel-tile .tile-sub{display:block;font-size:12px;color:var(--muted);margin-top:4px}
+.channel-tile .swatch{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+@media(max-width:1100px){.kpi-grid,.chart-grid,.channel-tiles{grid-template-columns:1fr 1fr}}
 @media(max-width:750px){.sidebar{display:none}.main{margin:0;padding:16px}.queue-main{padding:16px}}
 </style>
 </head>
@@ -58,9 +82,9 @@ body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--light
   <div class="logo">🥤</div>
   <div class="brand">Beverage Order<br>Dashboard</div>
   <nav class="nav">
-    <a href="#queue">⌂ &nbsp; Overview</a>
-    <a class="active" href="#queue">☷ &nbsp; Order Queue</a>
-    <a href="#queue">▥ &nbsp; Analytics</a>
+    <a href="#analytics" data-view="analytics">⌂ &nbsp; Overview</a>
+    <a class="active" href="#queue" data-view="queue">☷ &nbsp; Order Queue</a>
+    <a href="#analytics" data-view="analytics">▥ &nbsp; Analytics</a>
     <a href="#">⚙ &nbsp; Settings</a>
   </nav>
   <div class="tagline">Better data.<br>Faster drinks.<br>Happier customers.</div>
@@ -68,11 +92,14 @@ body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--light
 
 <main class="main">
 <header class="header">
-  <div><h1>Order Queue</h1><p>Orders loaded from cafe POS data.</p></div>
+  <div>
+    <h1 id="pageTitle">Order Queue</h1>
+    <p id="pageSubtitle">Orders loaded from cafe POS data.</p>
+  </div>
   <div><div class="live"><span></span>Live Data</div><small id="clock"></small></div>
 </header>
 
-<div class="card queue-main" id="queue">
+<div class="card queue-main view active" id="queue">
   <div class="queue-head">
     <div>
       <h3>Active Orders</h3>
@@ -149,6 +176,65 @@ body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--light
     </div>
   </div>
 </div>
+
+<div class="analytics view" id="analytics">
+  <section class="card section-card">
+    <h3>Business Snapshot</h3>
+    <p class="lede">Core coffee-shop KPIs from the loaded POS file.</p>
+    <div class="kpi-grid">
+      <div class="card kpi"><div class="kpi-label">Total Revenue</div><div class="kpi-value" id="kpiRevenue">—</div><div class="kpi-sub" id="kpiRevenueSub">Across all completed orders</div></div>
+      <div class="card kpi"><div class="kpi-label">Total Orders</div><div class="kpi-value" id="kpiOrders">—</div><div class="kpi-sub" id="kpiOrdersSub">Unique tickets</div></div>
+      <div class="card kpi"><div class="kpi-label">Average Ticket</div><div class="kpi-value" id="kpiAov">—</div><div class="kpi-sub">Revenue ÷ orders</div></div>
+      <div class="card kpi"><div class="kpi-label">Avg Items / Order</div><div class="kpi-value" id="kpiItems">—</div><div class="kpi-sub">Basket size</div></div>
+      <div class="card kpi"><div class="kpi-label">Beverage Attach Rate</div><div class="kpi-value" id="kpiBeverage">—</div><div class="kpi-sub">Orders that include a drink</div></div>
+      <div class="card kpi"><div class="kpi-label">Known Customers</div><div class="kpi-value" id="kpiLoyalty">—</div><div class="kpi-sub">Orders with a customer ID</div></div>
+    </div>
+  </section>
+
+  <section class="card section-card">
+    <h3>Channel Mix</h3>
+    <p class="lede">Click All or any mix of channels to change what the charts show. Daily revenue is grouped by day of week.</p>
+    <div class="channel-tiles" id="channelTiles"></div>
+    <div class="chart-grid" id="channelCompareCharts">
+      <div class="chart-box"><canvas id="channelOrdersChart"></canvas></div>
+      <div class="chart-box"><canvas id="channelRevenueChart"></canvas></div>
+    </div>
+    <div class="chart-box wide"><canvas id="channelDayChart"></canvas></div>
+  </section>
+
+  <section class="card section-card">
+    <h3>Store Performance</h3>
+    <p class="lede">Revenue and ticket count by cafe location.</p>
+    <div class="chart-box"><canvas id="storeChart"></canvas></div>
+  </section>
+
+  <section class="card section-card">
+    <h3>When Customers Order</h3>
+    <p class="lede">Busy days and rush hours for staffing and inventory.</p>
+    <div class="chart-grid">
+      <div class="chart-box"><canvas id="dayChart"></canvas></div>
+      <div class="chart-box"><canvas id="hourChart"></canvas></div>
+    </div>
+  </section>
+
+  <section class="card section-card">
+    <h3>What Sells</h3>
+    <p class="lede">Category mix and the menu items driving the most revenue.</p>
+    <div class="chart-grid">
+      <div class="chart-box"><canvas id="categoryChart"></canvas></div>
+      <div class="chart-box"><canvas id="itemsChart"></canvas></div>
+    </div>
+  </section>
+
+  <section class="card section-card">
+    <h3>Fulfillment &amp; Payment</h3>
+    <p class="lede">Delivery platforms and how guests pay.</p>
+    <div class="chart-grid">
+      <div class="chart-box"><canvas id="platformChart"></canvas></div>
+      <div class="chart-box"><canvas id="paymentChart"></canvas></div>
+    </div>
+  </section>
+</div>
 </main>
 </div>
 
@@ -159,8 +245,13 @@ const DAY_ORDER = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"
 
 let lineItems = [];
 let orders = [];
+let catalogOrders = [];
 let page = 1;
 let sourceName = "";
+const charts = {};
+const CHART_COLORS = ["#07594f","#3b82f6","#8064b7","#f0783c","#39a96b","#f7c948","#0b4d4a","#64748b"];
+const CHANNEL_COLORS = {"In Store":"#3b82f6","Mobile":"#8064b7","Delivery":"#07594f"};
+let channelSelection = null;
 
 function parseCSV(text){
   const rows = [];
@@ -255,25 +346,32 @@ function ingest(text, name){
   lineItems = parseCSV(text);
   if(!lineItems.length){
     orders = [];
+    catalogOrders = [];
     setStatus("No rows found in " + name, "error");
     renderFilters();
     render();
+    renderAnalytics();
     return;
   }
   const required = ["order_id","order_datetime","order_channel","item_name"];
   const missing = required.filter(col => !(col in lineItems[0]));
   if(missing.length){
     orders = [];
+    catalogOrders = [];
     setStatus("CSV is missing columns: " + missing.join(", "), "error");
     renderFilters();
     render();
+    renderAnalytics();
     return;
   }
-  orders = toOrders(lineItems);
+  catalogOrders = toOrders(lineItems);
+  orders = catalogOrders.slice();
+  channelSelection = null;
   sourceName = name;
   page = 1;
   renderFilters();
   render();
+  renderAnalytics();
   setStatus(`${orders.length.toLocaleString()} orders · ${lineItems.length.toLocaleString()} line items · ${name}`, "ok");
 }
 
@@ -334,6 +432,269 @@ function applyFilters(){
 
 function money(n){
   return Number(n).toLocaleString(undefined, {style:"currency", currency:"USD"});
+}
+
+function tally(list, keyFn, valFn){
+  const map = new Map();
+  for(const item of list){
+    const key = keyFn(item);
+    map.set(key, (map.get(key) || 0) + (valFn ? valFn(item) : 1));
+  }
+  return map;
+}
+
+function chartDefaults(){
+  if(typeof Chart === "undefined") return;
+  Chart.defaults.font.family = "Inter, Segoe UI, Arial, sans-serif";
+  Chart.defaults.color = "#566873";
+  Chart.defaults.plugins.legend.labels.boxWidth = 12;
+}
+
+function upsertChart(id, config){
+  if(typeof Chart === "undefined") return;
+  if(charts[id]) charts[id].destroy();
+  const ctx = document.getElementById(id);
+  if(!ctx) return;
+  charts[id] = new Chart(ctx, config);
+}
+
+function allChannels(){
+  return unique(catalogOrders.map(o => o.channel));
+}
+
+function selectedChannelList(){
+  const all = allChannels();
+  if(!channelSelection) return all;
+  return all.filter(c => channelSelection.has(c));
+}
+
+function channelColor(channel, index){
+  return CHANNEL_COLORS[channel] || CHART_COLORS[index % CHART_COLORS.length];
+}
+
+function onChannelTileClick(channel){
+  const all = allChannels();
+  if(channel === "all"){
+    channelSelection = null;
+  } else if(!channelSelection){
+    channelSelection = new Set([channel]);
+  } else if(channelSelection.has(channel)){
+    channelSelection.delete(channel);
+    if(!channelSelection.size || all.every(c => channelSelection.has(c))) channelSelection = null;
+  } else {
+    channelSelection.add(channel);
+    if(all.every(c => channelSelection.has(c))) channelSelection = null;
+  }
+  renderChannelMix();
+}
+
+function renderChannelTiles(){
+  const box = document.getElementById("channelTiles");
+  if(!box) return;
+  const all = allChannels();
+  const allActive = !channelSelection;
+  const stats = Object.fromEntries(all.map(channel => {
+    const rows = catalogOrders.filter(o => o.channel === channel);
+    return [channel, { orders: rows.length, revenue: rows.reduce((sum, o) => sum + o.total, 0) }];
+  }));
+  const totalOrders = catalogOrders.length;
+  const totalRevenue = catalogOrders.reduce((sum, o) => sum + o.total, 0);
+  const tiles = [`<button type="button" class="channel-tile${allActive ? " active" : ""}" data-channel="all">
+      <span class="tile-label">All channels</span>
+      <span class="tile-value">${money(totalRevenue)}</span>
+      <span class="tile-sub">${totalOrders.toLocaleString()} orders</span>
+    </button>`].concat(all.map((channel, i) => {
+    const s = stats[channel];
+    const active = !allActive && channelSelection.has(channel);
+    return `<button type="button" class="channel-tile${active ? " active" : ""}" data-channel="${channel}">
+      <span class="tile-label"><i class="swatch" style="background:${channelColor(channel, i)}"></i>${channel}</span>
+      <span class="tile-value">${money(s.revenue)}</span>
+      <span class="tile-sub">${s.orders.toLocaleString()} orders</span>
+    </button>`;
+  }));
+  box.innerHTML = tiles.join("");
+}
+
+function renderChannelMix(){
+  renderChannelTiles();
+  const data = catalogOrders;
+  const channels = selectedChannelList();
+  const filtered = data.filter(o => channels.includes(o.channel));
+  if(!data.length || typeof Chart === "undefined") return;
+  chartDefaults();
+  const compare = document.getElementById("channelCompareCharts");
+  const showCompare = channels.length > 1;
+  if(compare) compare.classList.toggle("is-hidden", !showCompare);
+  if(showCompare){
+    const colors = channels.map((c, i) => channelColor(c, i));
+    upsertChart("channelOrdersChart", {
+      type: "doughnut",
+      data: { labels: channels, datasets: [{ data: channels.map(c => filtered.filter(o => o.channel === c).length), backgroundColor: colors, borderWidth: 0 }] },
+      options: { maintainAspectRatio: false, plugins: { title: { display: true, text: "Orders by Channel" }, legend: { position: "bottom" } } }
+    });
+    upsertChart("channelRevenueChart", {
+      type: "bar",
+      data: { labels: channels, datasets: [{ label: "Revenue", data: channels.map(c => filtered.filter(o => o.channel === c).reduce((sum, o) => sum + o.total, 0)), backgroundColor: colors, borderRadius: 6 }] },
+      options: { maintainAspectRatio: false, plugins: { title: { display: true, text: "Revenue by Channel" }, legend: { display: false } }, scales: { y: { ticks: { callback: v => money(v) } } } }
+    });
+  } else {
+    ["channelOrdersChart","channelRevenueChart"].forEach(id => {
+      if(charts[id]){ charts[id].destroy(); delete charts[id]; }
+    });
+  }
+  const days = DAY_ORDER.filter(day => data.some(o => o.day === day));
+  upsertChart("channelDayChart", {
+    type: "line",
+    data: {
+      labels: days,
+      datasets: channels.map((channel, i) => ({
+        label: channel,
+        data: days.map(day => filtered.filter(o => o.channel === channel && o.day === day).reduce((sum, o) => sum + o.total, 0)),
+        borderColor: channelColor(channel, i),
+        backgroundColor: channelColor(channel, i),
+        pointBackgroundColor: channelColor(channel, i),
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        tension: .3,
+        fill: false
+      }))
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { title: { display: true, text: "Revenue by Channel per Day" }, legend: { position: "bottom" } },
+      scales: { y: { beginAtZero: true, ticks: { callback: v => money(v) } } }
+    }
+  });
+}
+
+function renderAnalytics(){
+  const data = catalogOrders;
+  const items = lineItems;
+  const setText = (id, value) => { const el = document.getElementById(id); if(el) el.textContent = value; };
+  if(!data.length){
+    ["kpiRevenue","kpiOrders","kpiAov","kpiItems","kpiBeverage","kpiLoyalty"].forEach(id => setText(id, "—"));
+    Object.values(charts).forEach(chart => chart.destroy());
+    Object.keys(charts).forEach(key => delete charts[key]);
+    return;
+  }
+
+  const revenue = data.reduce((sum, o) => sum + o.total, 0);
+  const beverageOrders = data.filter(o => o.categories.has("Beverage")).length;
+  const knownCustomers = data.filter(o => o.customer).length;
+  setText("kpiRevenue", money(revenue));
+  setText("kpiRevenueSub", `From ${sourceName || "POS data"}`);
+  setText("kpiOrders", data.length.toLocaleString());
+  setText("kpiOrdersSub", `${items.length.toLocaleString()} line items`);
+  setText("kpiAov", money(revenue / data.length));
+  setText("kpiItems", (data.reduce((sum, o) => sum + o.itemCount, 0) / data.length).toFixed(2));
+  setText("kpiBeverage", `${(100 * beverageOrders / data.length).toFixed(1)}%`);
+  setText("kpiLoyalty", `${(100 * knownCustomers / data.length).toFixed(1)}%`);
+
+  if(typeof Chart === "undefined") return;
+  chartDefaults();
+
+  renderChannelMix();
+
+  const locations = unique(data.map(o => o.location));
+  upsertChart("storeChart", {
+    type: "bar",
+    data: {
+      labels: locations,
+      datasets: [
+        { label: "Revenue", data: locations.map(l => data.filter(o => o.location === l).reduce((sum, o) => sum + o.total, 0)), backgroundColor: "#07594f", borderRadius: 6, yAxisID: "y" },
+        { label: "Orders", data: locations.map(l => data.filter(o => o.location === l).length), backgroundColor: "#3b82f6", borderRadius: 6, yAxisID: "y1" }
+      ]
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { title: { display: true, text: "Revenue and Orders by Location" } },
+      scales: {
+        y: { beginAtZero: true, ticks: { callback: v => money(v) } },
+        y1: { beginAtZero: true, position: "right", grid: { drawOnChartArea: false } }
+      }
+    }
+  });
+
+  const days = DAY_ORDER.filter(day => data.some(o => o.day === day));
+  upsertChart("dayChart", {
+    type: "bar",
+    data: { labels: days, datasets: [{ label: "Orders", data: days.map(day => data.filter(o => o.day === day).length), backgroundColor: "#07594f", borderRadius: 6 }] },
+    options: { maintainAspectRatio: false, plugins: { title: { display: true, text: "Orders by Day of Week" }, legend: { display: false } } }
+  });
+
+  const hours = [...Array(15).keys()].map(i => i + 6);
+  upsertChart("hourChart", {
+    type: "line",
+    data: {
+      labels: hours.map(h => `${String(h).padStart(2,"0")}:00`),
+      datasets: [{
+        label: "Orders",
+        data: hours.map(h => data.filter(o => Number(o.datetime.slice(11,13)) === h).length),
+        borderColor: "#3b82f6",
+        backgroundColor: "rgba(59,130,246,.15)",
+        fill: true,
+        tension: .3,
+        pointRadius: 3
+      }]
+    },
+    options: { maintainAspectRatio: false, plugins: { title: { display: true, text: "Orders by Hour" }, legend: { display: false } } }
+  });
+
+  const categories = unique(items.map(r => r.category));
+  upsertChart("categoryChart", {
+    type: "doughnut",
+    data: {
+      labels: categories,
+      datasets: [{ data: categories.map(c => items.filter(r => r.category === c).reduce((sum, r) => sum + Number(r.line_total || 0), 0)), backgroundColor: CHART_COLORS, borderWidth: 0 }]
+    },
+    options: { maintainAspectRatio: false, plugins: { title: { display: true, text: "Revenue by Category" }, legend: { position: "bottom" } } }
+  });
+
+  const itemRevenue = tally(items, r => r.item_name, r => Number(r.line_total || 0));
+  const topItems = [...itemRevenue.entries()].sort((a,b) => b[1] - a[1]).slice(0, 8);
+  upsertChart("itemsChart", {
+    type: "bar",
+    data: { labels: topItems.map(([name]) => name), datasets: [{ label: "Revenue", data: topItems.map(([, value]) => value), backgroundColor: "#8064b7", borderRadius: 6 }] },
+    options: {
+      indexAxis: "y",
+      maintainAspectRatio: false,
+      plugins: { title: { display: true, text: "Top Items by Revenue" }, legend: { display: false } },
+      scales: { x: { ticks: { callback: v => money(v) } } }
+    }
+  });
+
+  const platforms = unique(data.filter(o => o.platform).map(o => o.platform));
+  upsertChart("platformChart", {
+    type: "doughnut",
+    data: { labels: platforms.length ? platforms : ["None"], datasets: [{ data: platforms.length ? platforms.map(p => data.filter(o => o.platform === p).length) : [0], backgroundColor: CHART_COLORS, borderWidth: 0 }] },
+    options: { maintainAspectRatio: false, plugins: { title: { display: true, text: "Delivery Platform Share" }, legend: { position: "bottom" } } }
+  });
+
+  const payments = unique(data.map(o => o.payment));
+  upsertChart("paymentChart", {
+    type: "bar",
+    data: { labels: payments, datasets: [{ label: "Orders", data: payments.map(p => data.filter(o => o.payment === p).length), backgroundColor: "#f0783c", borderRadius: 6 }] },
+    options: { maintainAspectRatio: false, plugins: { title: { display: true, text: "Orders by Payment Method" }, legend: { display: false } } }
+  });
+}
+
+function showView(view){
+  const isAnalytics = view === "analytics";
+  document.getElementById("queue").classList.toggle("active", !isAnalytics);
+  document.getElementById("analytics").classList.toggle("active", isAnalytics);
+  document.getElementById("pageTitle").textContent = isAnalytics ? "Analytics" : "Order Queue";
+  document.getElementById("pageSubtitle").textContent = isAnalytics
+    ? "Coffee shop performance from cafe POS data."
+    : "Orders loaded from cafe POS data.";
+  document.querySelectorAll(".nav a[data-view]").forEach(link => {
+    const label = link.textContent;
+    link.classList.toggle("active", view === "queue" ? label.includes("Order Queue") : label.includes("Analytics"));
+  });
+  if(isAnalytics) renderAnalytics();
+}
+
+function syncViewFromHash(){
+  showView(location.hash === "#analytics" ? "analytics" : "queue");
 }
 
 function render(){
@@ -400,6 +761,7 @@ async function loadDefaultCsv(){
     setStatus("Could not auto-load cafe_pos_data.csv. Use Load CSV, or open this page from a local server.", "error");
     renderFilters();
     render();
+    renderAnalytics();
   }
 }
 
@@ -411,6 +773,10 @@ document.getElementById("csvFile").addEventListener("change", e => {
   reader.onerror = () => setStatus("Could not read " + file.name, "error");
   reader.readAsText(file);
 });
+document.getElementById("channelTiles").addEventListener("click", e => {
+  const tile = e.target.closest("[data-channel]");
+  if(tile) onChannelTileClick(tile.dataset.channel);
+});
 document.getElementById("clearFilters").addEventListener("click", clearFilters);
 document.getElementById("prevPage").addEventListener("click", () => { page -= 1; render(); });
 document.getElementById("nextPage").addEventListener("click", () => { page += 1; render(); });
@@ -420,6 +786,8 @@ document.querySelectorAll("#filters select, #filters input").forEach(el => {
 function clock(){document.getElementById("clock").textContent=new Date().toLocaleString([], {dateStyle:"medium",timeStyle:"short"});}
 clock();
 setInterval(clock,1000);
+window.addEventListener("hashchange", syncViewFromHash);
+syncViewFromHash();
 loadDefaultCsv();
 </script>
 </body>
