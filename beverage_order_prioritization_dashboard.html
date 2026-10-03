@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Beverage Order Prioritization Dashboard</title>
+<title>Beverage Order Dashboard</title>
 <style>
 :root{
   --navy:#102a35; --teal:#0b4d4a; --green:#39a96b; --light:#f4f7f8;
@@ -23,7 +23,7 @@ body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--light
 .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
 .header h1{margin:0;font-size:28px}.header p{margin:5px 0 0;color:#506674}
 .live{font-size:13px;color:#16825b;font-weight:700}.live span{display:inline-block;width:9px;height:9px;background:#22a06b;border-radius:50%;margin-right:7px}
-.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
 .card{background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 2px 7px #102a3510}
 .kpi{padding:17px}.kpi-label{font-size:13px;color:#233844;display:flex;gap:8px;align-items:center}.kpi-value{font-size:31px;font-weight:800;margin-top:10px}.trend{font-size:12px;color:#16825b;margin-left:8px}.sub{font-size:12px;color:var(--muted)}
 .grid4{display:grid;grid-template-columns:1.15fr 1fr 1.15fr .9fr;gap:14px;margin-top:14px}
@@ -40,7 +40,7 @@ body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--light
 .dot{position:absolute;width:7px;height:7px;border-radius:50%;background:#3b82f6}
 .gridbottom{display:grid;grid-template-columns:1.55fr .95fr;gap:14px;margin-top:14px}
 .panel{padding:16px}
-.table{width:100%;border-collapse:collapse;font-size:12px}.table th{background:#f3f7f8;text-align:left;color:#566873;font-weight:600;padding:10px}.table td{padding:9px;border-bottom:1px solid #edf1f2}.badge{display:inline-block;border-radius:6px;padding:5px 11px;font-weight:700;font-size:11px}.lowb{background:#ccefd9;color:#187346}.modb{background:#ffe6a5;color:#8a6800}.highb{background:#ffd4bf;color:#b34b18}.critb{background:#ffd0d0;color:#b51e1e}.prepare{background:#07594f;color:#fff;border:0;border-radius:6px;padding:6px 12px;cursor:pointer}.prepare:hover{background:#063f3a}
+.table{width:100%;border-collapse:collapse;font-size:12px}.table th{background:#f3f7f8;text-align:left;color:#566873;font-weight:600;padding:10px}.table td{padding:9px;border-bottom:1px solid #edf1f2}.prepare{background:#07594f;color:#fff;border:0;border-radius:6px;padding:6px 12px;cursor:pointer}.prepare:hover{background:#063f3a}
 .insight{padding:12px 0;border-bottom:1px solid #e8edef;font-size:12px;line-height:1.45}.num{display:inline-grid;place-items:center;background:#0d6b62;color:#fff;border-radius:50%;width:25px;height:25px;margin-right:9px;font-weight:800}
 .platforms{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center}.platform{padding:13px 3px}.circle{width:40px;height:40px;border-radius:50%;margin:auto;background:#e84636;color:#fff;display:grid;place-items:center;font-weight:800;font-size:12px}.platform strong{display:block;margin-top:8px;font-size:12px}.platform small{color:#71808a}
 .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.controls select,.controls input{padding:8px;border:1px solid var(--border);border-radius:6px;background:#fff}
@@ -52,7 +52,7 @@ body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--light
 <div class="app">
 <aside class="sidebar">
   <div class="logo">🥤</div>
-  <div class="brand">Beverage Order<br>Prioritization Dashboard</div>
+  <div class="brand">Beverage Order<br>Dashboard</div>
   <nav class="nav">
     <a class="active" href="#">⌂ &nbsp; Overview</a>
     <a href="#queue">☷ &nbsp; Order Queue</a>
@@ -72,26 +72,24 @@ body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--light
   <div class="card kpi"><div class="kpi-label">🧋 Total Active Orders</div><div class="kpi-value" id="activeOrders">24 <span class="trend">↑ 6%</span></div><div class="sub">vs. last hour</div></div>
   <div class="card kpi"><div class="kpi-label">◷ Average Wait Time</div><div class="kpi-value" id="avgWait">9 min <span class="trend">↓ 18%</span></div><div class="sub">vs. last hour</div></div>
   <div class="card kpi"><div class="kpi-label">◷ Longest Waiting Order</div><div class="kpi-value">22 min</div><div class="sub">Order #1047</div></div>
-  <div class="card kpi"><div class="kpi-label">⚠ High / Critical Priority</div><div class="kpi-value">8</div><div class="sub">33% of total orders</div></div>
+<div class="sub">33% of total orders</div></div>
   <div class="card kpi"><div class="kpi-label">🥤 Average Items / Order</div><div class="kpi-value">3.2 <span class="trend">↑ 7%</span></div><div class="sub">vs. last hour</div></div>
 </section>
 
 <section class="grid4" id="analytics">
   <div class="card chart"><h3>Orders by Fulfillment Method</h3><div class="donut"></div><div class="legend"><span><i style="background:#45aa73"></i>In-House 10</span><span><i style="background:#3b82f6"></i>Mobile 8</span><span><i style="background:#8064b7"></i>Delivery 6</span></div></div>
-  <div class="card chart"><h3>Orders by Priority Level</h3><div class="bar-wrap"><div class="bar low">8</div><div class="bar mod">8</div><div class="bar high">5</div><div class="bar critical">3</div></div><div class="labels"><span>Low<br>0–30</span><span>Moderate<br>31–60</span><span>High<br>61–80</span><span>Critical<br>81–100</span></div></div>
-  <div class="card chart"><h3>Average Wait Time by Fulfillment Method</h3><div class="linechart"><div class="line"></div><div class="dot" style="left:5%;top:57%"></div><div class="dot" style="left:29%;top:48%"></div><div class="dot" style="left:53%;top:30%"></div><div class="dot" style="left:77%;top:35%"></div></div><div class="legend"><span><i style="background:#45aa73"></i>In-House</span><span><i style="background:#3b82f6"></i>Mobile</span><span><i style="background:#8064b7"></i>Delivery</span></div></div>
+<div class="card chart"><h3>Average Wait Time by Fulfillment Method</h3><div class="linechart"><div class="line"></div><div class="dot" style="left:5%;top:57%"></div><div class="dot" style="left:29%;top:48%"></div><div class="dot" style="left:53%;top:30%"></div><div class="dot" style="left:77%;top:35%"></div></div><div class="legend"><span><i style="background:#45aa73"></i>In-House</span><span><i style="background:#3b82f6"></i>Mobile</span><span><i style="background:#8064b7"></i>Delivery</span></div></div>
   <div class="card chart"><h3>Order Quantities Distribution</h3><div class="donut" style="background:conic-gradient(#45aa73 0 46%,#3b82f6 46% 71%,#8064b7 71% 88%,#f0783c 88% 100%)"></div><div class="legend"><span>1–2: 11</span><span>3–5: 6</span><span>6–9: 4</span><span>10+: 3</span></div></div>
 </section>
 
 <section class="gridbottom">
 <div class="card panel" id="queue">
-  <h3>Prioritized Order Queue</h3>
+  <h3>Order Queue</h3>
   <div class="controls">
     <select id="methodFilter"><option value="all">All Methods</option><option>In-House</option><option>Mobile</option><option>Delivery</option></select>
-    <select id="priorityFilter"><option value="all">All Priorities</option><option>Low</option><option>Moderate</option><option>High</option><option>Critical</option></select>
     <input id="search" placeholder="Search order #">
   </div>
-  <table class="table"><thead><tr><th>#</th><th>Order ID</th><th>Method</th><th>Items</th><th>Wait Time</th><th>Priority Score</th><th>Priority</th><th>Action</th></tr></thead>
+  <table class="table"><thead><tr><th>#</th><th>Order ID</th><th>Method</th><th>Items</th><th>Wait Time</th><th>Action</th></tr></thead>
   <tbody id="queueBody"></tbody></table>
 </div>
 
@@ -99,7 +97,7 @@ body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--light
 <div class="card panel"><h3>💡 Key Insights</h3>
 <div class="insight"><span class="num">1</span>Delivery orders have the longest average wait time, approximately 2.5× higher than in-house orders.</div>
 <div class="insight"><span class="num">2</span>Orders with 6+ items take longer on average to complete than smaller orders.</div>
-<div class="insight"><span class="num">3</span>Mobile orders represent a significant portion of total volume and high-priority tickets.</div>
+<div class="insight"><span class="num">3</span>Mobile orders represent a significant portion of total order volume.</div>
 <div class="insight"><span class="num">4</span>Order volume typically increases during peak afternoon periods.</div>
 </div>
 <div class="card panel" style="margin-top:14px"><h3>Pickup / Delivery Platforms</h3><div class="platforms">
@@ -115,26 +113,25 @@ body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--light
 
 <script>
 const orders=[
-{id:1042,method:"Mobile",items:3,wait:14,score:92,priority:"Critical"},
-{id:1039,method:"Delivery",items:5,wait:11,score:78,priority:"High"},
-{id:1047,method:"In-House",items:2,wait:8,score:65,priority:"High"},
-{id:1041,method:"Delivery",items:4,wait:9,score:58,priority:"Moderate"},
-{id:1045,method:"Mobile",items:1,wait:5,score:42,priority:"Moderate"},
-{id:1048,method:"In-House",items:3,wait:4,score:28,priority:"Low"},
-{id:1046,method:"Mobile",items:6,wait:2,score:20,priority:"Low"},
-{id:1037,method:"Delivery",items:2,wait:1,score:15,priority:"Low"},
-{id:1043,method:"In-House",items:1,wait:0,score:8,priority:"Low"},
-{id:1049,method:"Mobile",items:4,wait:0,score:5,priority:"Low"}
+{id:1042,method:"Mobile",items:3,wait:14},
+{id:1039,method:"Delivery",items:5,wait:11},
+{id:1047,method:"In-House",items:2,wait:8},
+{id:1041,method:"Delivery",items:4,wait:9},
+{id:1045,method:"Mobile",items:1,wait:5},
+{id:1048,method:"In-House",items:3,wait:4},
+{id:1046,method:"Mobile",items:6,wait:2},
+{id:1037,method:"Delivery",items:2,wait:1},
+{id:1043,method:"In-House",items:1,wait:0},
+{id:1049,method:"Mobile",items:4,wait:0}
 ];
 
 function render(){
  const mf=document.getElementById("methodFilter").value;
- const pf=document.getElementById("priorityFilter").value;
+ const pf="all";
  const q=document.getElementById("search").value.trim();
- const filtered=orders.filter(o=>(mf==="all"||o.method===mf)&&(pf==="all"||o.priority===pf)&&(q===""||String(o.id).includes(q)));
+ const filtered=orders.filter(o=>(mf==="all"||o.method===mf)&&(q===""||String(o.id).includes(q)));
  document.getElementById("queueBody").innerHTML=filtered.map((o,i)=>{
-   const cls=o.priority==="Critical"?"critb":o.priority==="High"?"highb":o.priority==="Moderate"?"modb":"lowb";
-   return `<tr><td>${i+1}</td><td><strong>#${o.id}</strong></td><td>${o.method}</td><td>${o.items}</td><td>${o.wait} min</td><td><strong>${o.score}</strong></td><td><span class="badge ${cls}">${o.priority}</span></td><td><button class="prepare" onclick="prepare(${o.id})">Prepare</button></td></tr>`;
+   return `<tr><td>${i+1}</td><td><strong>#${o.id}</strong></td><td>${o.method}</td><td>${o.items}</td><td>${o.wait} min</td><td><button class="prepare" onclick="prepare(${o.id})">Prepare</button></td></tr>`;
  }).join("");
 }
 function prepare(id){
