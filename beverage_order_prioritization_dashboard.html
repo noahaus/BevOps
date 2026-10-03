@@ -19,20 +19,37 @@ body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--light
 .nav a.active,.nav a:hover{background:#244f50;color:#fff}
 .tagline{position:absolute;bottom:25px;left:27px;color:#a9c4c2;font-size:13px;line-height:1.5;font-style:italic}
 .main{margin-left:230px;padding:28px;flex:1}
-.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;gap:16px}
 .header h1{margin:0;font-size:28px}.header p{margin:5px 0 0;color:#506674}
 .live{font-size:13px;color:#16825b;font-weight:700}.live span{display:inline-block;width:9px;height:9px;background:#22a06b;border-radius:50%;margin-right:7px}
 .card{background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 2px 7px #102a3510}
 .queue-main{padding:22px 24px}
-.queue-main h3{font-size:22px;margin:0 0 16px}
-.table{width:100%;border-collapse:collapse;font-size:14px}
-.table th{background:#f3f7f8;text-align:left;color:#566873;font-weight:600;padding:12px 10px}
-.table td{padding:12px 10px;border-bottom:1px solid #edf1f2}
+.queue-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.queue-main h3{font-size:22px;margin:0}
+.status{font-size:13px;color:var(--muted)}.status.error{color:#b42318}.status.ok{color:#16825b}
+.controls{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:14px}
+.controls .search{grid-column:1 / -1}
+.filter{display:flex;flex-direction:column;gap:5px;font-size:11px;color:#566873;font-weight:600}
+.filter select,.filter input,.search input{padding:8px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:13px;font-weight:400;color:var(--text);width:100%}
+.actions{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
+.btn{background:#07594f;color:#fff;border:0;border-radius:6px;padding:8px 14px;cursor:pointer;font-size:13px;height:36px}
+.btn:hover{background:#063f3a}
+.btn.secondary{background:#eef3f4;color:#233844}
+.btn.secondary:hover{background:#e1e9eb}
+.file-btn{display:inline-flex;align-items:center;justify-content:center;background:#eef3f4;color:#233844;border-radius:6px;padding:8px 14px;cursor:pointer;font-size:13px;height:36px}
+.file-btn input{display:none}
+.file-btn:hover{background:#e1e9eb}
+.table-wrap{overflow:auto}
+.table{width:100%;border-collapse:collapse;font-size:13px;min-width:980px}
+.table th{background:#f3f7f8;text-align:left;color:#566873;font-weight:600;padding:12px 10px;white-space:nowrap}
+.table td{padding:11px 10px;border-bottom:1px solid #edf1f2;vertical-align:top}
+.items{color:#3d4f59;font-size:12px;line-height:1.45;max-width:240px}
 .prepare{background:#07594f;color:#fff;border:0;border-radius:6px;padding:8px 16px;cursor:pointer;font-size:13px}
 .prepare:hover{background:#063f3a}
-.controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-.controls select,.controls input{padding:8px;border:1px solid var(--border);border-radius:6px;background:#fff}
-@media(max-width:750px){.sidebar{display:none}.main{margin:0;padding:16px}}
+.pager{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;font-size:13px;color:var(--muted)}
+.pager button:disabled{opacity:.45;cursor:default}
+.empty{padding:36px 12px;text-align:center;color:var(--muted)}
+@media(max-width:750px){.sidebar{display:none}.main{margin:0;padding:16px}.queue-main{padding:16px}}
 </style>
 </head>
 <body>
@@ -51,51 +68,359 @@ body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--light
 
 <main class="main">
 <header class="header">
-  <div><h1>Order Queue</h1><p>Prioritize and prepare the next drinks in line.</p></div>
+  <div><h1>Order Queue</h1><p>Orders loaded from cafe POS data.</p></div>
   <div><div class="live"><span></span>Live Data</div><small id="clock"></small></div>
 </header>
 
 <div class="card queue-main" id="queue">
-  <h3>Active Orders</h3>
-  <div class="controls">
-    <select id="methodFilter"><option value="all">All Methods</option><option>In-House</option><option>Mobile</option><option>Delivery</option></select>
-    <input id="search" placeholder="Search order #">
+  <div class="queue-head">
+    <div>
+      <h3>Active Orders</h3>
+      <div class="status" id="loadStatus">Loading cafe_pos_data.csv…</div>
+    </div>
+    <div class="actions">
+      <label class="file-btn">Load CSV<input type="file" id="csvFile" accept=".csv,text/csv"></label>
+      <button class="btn secondary" id="clearFilters" type="button">Clear filters</button>
+    </div>
   </div>
-  <table class="table"><thead><tr><th>#</th><th>Order ID</th><th>Method</th><th>Items</th><th>Wait Time</th><th>Action</th></tr></thead>
-  <tbody id="queueBody"></tbody></table>
+
+  <div class="controls" id="filters">
+    <label class="filter search">Search
+      <input id="search" placeholder="Order ID, customer, or item">
+    </label>
+    <label class="filter">Channel
+      <select id="channelFilter"></select>
+    </label>
+    <label class="filter">Store location
+      <select id="locationFilter"></select>
+    </label>
+    <label class="filter">Day of week
+      <select id="dayFilter"></select>
+    </label>
+    <label class="filter">Delivery platform
+      <select id="platformFilter"></select>
+    </label>
+    <label class="filter">Payment method
+      <select id="paymentFilter"></select>
+    </label>
+    <label class="filter">Category
+      <select id="categoryFilter"></select>
+    </label>
+    <label class="filter">Item
+      <select id="itemFilter"></select>
+    </label>
+    <label class="filter">Items in order
+      <select id="countFilter"></select>
+    </label>
+    <label class="filter">From date
+      <input type="date" id="dateFrom">
+    </label>
+    <label class="filter">To date
+      <input type="date" id="dateTo">
+    </label>
+  </div>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Order ID</th>
+          <th>Date</th>
+          <th>Day</th>
+          <th>Location</th>
+          <th>Channel</th>
+          <th>Platform</th>
+          <th>Payment</th>
+          <th>Items</th>
+          <th>Qty</th>
+          <th>Total</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="queueBody"></tbody>
+    </table>
+  </div>
+  <div class="pager">
+    <span id="pageInfo"></span>
+    <div>
+      <button class="btn secondary" id="prevPage" type="button">Previous</button>
+      <button class="btn secondary" id="nextPage" type="button">Next</button>
+    </div>
+  </div>
 </div>
 </main>
 </div>
 
 <script>
-const orders=[
-{id:1042,method:"Mobile",items:3,wait:14},
-{id:1039,method:"Delivery",items:5,wait:11},
-{id:1047,method:"In-House",items:2,wait:8},
-{id:1041,method:"Delivery",items:4,wait:9},
-{id:1045,method:"Mobile",items:1,wait:5},
-{id:1048,method:"In-House",items:3,wait:4},
-{id:1046,method:"Mobile",items:6,wait:2},
-{id:1037,method:"Delivery",items:2,wait:1},
-{id:1043,method:"In-House",items:1,wait:0},
-{id:1049,method:"Mobile",items:4,wait:0}
-];
+const CSV_PATH = "cafe_pos_data.csv";
+const PAGE_SIZE = 20;
+const DAY_ORDER = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+
+let lineItems = [];
+let orders = [];
+let page = 1;
+let sourceName = "";
+
+function parseCSV(text){
+  const rows = [];
+  let row = [];
+  let field = "";
+  let inQuotes = false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i];
+    if(inQuotes){
+      if(c === '"'){
+        if(text[i+1] === '"'){ field += '"'; i++; }
+        else inQuotes = false;
+      } else field += c;
+    } else if(c === '"'){
+      inQuotes = true;
+    } else if(c === ","){
+      row.push(field);
+      field = "";
+    } else if(c === "\n"){
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = "";
+    } else if(c !== "\r"){
+      field += c;
+    }
+  }
+  if(field.length || row.length){
+    row.push(field);
+    rows.push(row);
+  }
+  if(!rows.length) return [];
+  const headers = rows[0].map(h => h.trim());
+  return rows.slice(1)
+    .filter(r => r.some(v => String(v).trim() !== ""))
+    .map(r => {
+      const obj = {};
+      headers.forEach((h,i) => { obj[h] = (r[i] || "").trim(); });
+      return obj;
+    });
+}
+
+function unique(values, sortFn){
+  const list = [...new Set(values.filter(v => v !== ""))];
+  return sortFn ? list.sort(sortFn) : list.sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric:true}));
+}
+
+function fillSelect(id, label, values){
+  const el = document.getElementById(id);
+  const current = el.value;
+  el.innerHTML = `<option value="all">All ${label}</option>` + values.map(v => `<option value="${v.replaceAll('"','&quot;')}">${v}</option>`).join("");
+  if([...el.options].some(o => o.value === current)) el.value = current;
+}
+
+function toOrders(rows){
+  const map = new Map();
+  for(const line of rows){
+    if(!map.has(line.order_id)){
+      map.set(line.order_id, {
+        id: line.order_id,
+        datetime: line.order_datetime,
+        day: line.day_of_week,
+        location: line.store_location,
+        channel: line.order_channel,
+        platform: line.delivery_platform,
+        payment: line.payment_method,
+        customer: line.customer_id,
+        items: [],
+        categories: new Set(),
+        itemCount: Number(line.order_item_count || 0),
+        total: Number(line.order_total || 0)
+      });
+    }
+    const order = map.get(line.order_id);
+    order.items.push({
+      name: line.item_name,
+      qty: Number(line.quantity || 0),
+      category: line.category
+    });
+    if(line.category) order.categories.add(line.category);
+  }
+  return [...map.values()].sort((a,b) => a.datetime.localeCompare(b.datetime));
+}
+
+function setStatus(message, kind){
+  const el = document.getElementById("loadStatus");
+  el.textContent = message;
+  el.className = "status" + (kind ? " " + kind : "");
+}
+
+function ingest(text, name){
+  lineItems = parseCSV(text);
+  if(!lineItems.length){
+    orders = [];
+    setStatus("No rows found in " + name, "error");
+    renderFilters();
+    render();
+    return;
+  }
+  const required = ["order_id","order_datetime","order_channel","item_name"];
+  const missing = required.filter(col => !(col in lineItems[0]));
+  if(missing.length){
+    orders = [];
+    setStatus("CSV is missing columns: " + missing.join(", "), "error");
+    renderFilters();
+    render();
+    return;
+  }
+  orders = toOrders(lineItems);
+  sourceName = name;
+  page = 1;
+  renderFilters();
+  render();
+  setStatus(`${orders.length.toLocaleString()} orders · ${lineItems.length.toLocaleString()} line items · ${name}`, "ok");
+}
+
+function renderFilters(){
+  fillSelect("channelFilter", "channels", unique(orders.map(o => o.channel)));
+  fillSelect("locationFilter", "locations", unique(orders.map(o => o.location)));
+  fillSelect("dayFilter", "days", unique(orders.map(o => o.day), (a,b) => DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b)));
+  const platforms = unique(orders.map(o => o.platform));
+  fillSelect("platformFilter", "platforms", platforms);
+  const platformEl = document.getElementById("platformFilter");
+  if(![...platformEl.options].some(o => o.value === "none")){
+    platformEl.insertAdjacentHTML("beforeend", `<option value="none">None</option>`);
+  }
+  fillSelect("paymentFilter", "payments", unique(orders.map(o => o.payment)));
+  fillSelect("categoryFilter", "categories", unique(lineItems.map(r => r.category)));
+  fillSelect("itemFilter", "items", unique(lineItems.map(r => r.item_name)));
+  fillSelect("countFilter", "counts", unique(orders.map(o => String(o.itemCount))));
+}
+
+function currentFilters(){
+  return {
+    search: document.getElementById("search").value.trim().toLowerCase(),
+    channel: document.getElementById("channelFilter").value,
+    location: document.getElementById("locationFilter").value,
+    day: document.getElementById("dayFilter").value,
+    platform: document.getElementById("platformFilter").value,
+    payment: document.getElementById("paymentFilter").value,
+    category: document.getElementById("categoryFilter").value,
+    item: document.getElementById("itemFilter").value,
+    count: document.getElementById("countFilter").value,
+    dateFrom: document.getElementById("dateFrom").value,
+    dateTo: document.getElementById("dateTo").value
+  };
+}
+
+function applyFilters(){
+  const f = currentFilters();
+  return orders.filter(o => {
+    if(f.channel !== "all" && o.channel !== f.channel) return false;
+    if(f.location !== "all" && o.location !== f.location) return false;
+    if(f.day !== "all" && o.day !== f.day) return false;
+    if(f.platform === "none" && o.platform) return false;
+    if(f.platform !== "all" && f.platform !== "none" && o.platform !== f.platform) return false;
+    if(f.payment !== "all" && o.payment !== f.payment) return false;
+    if(f.count !== "all" && String(o.itemCount) !== f.count) return false;
+    if(f.category !== "all" && !o.categories.has(f.category)) return false;
+    if(f.item !== "all" && !o.items.some(item => item.name === f.item)) return false;
+    const date = o.datetime.slice(0,10);
+    if(f.dateFrom && date < f.dateFrom) return false;
+    if(f.dateTo && date > f.dateTo) return false;
+    if(f.search){
+      const hay = [o.id, o.customer, o.items.map(item => item.name).join(" ")].join(" ").toLowerCase();
+      if(!hay.includes(f.search)) return false;
+    }
+    return true;
+  });
+}
+
+function money(n){
+  return Number(n).toLocaleString(undefined, {style:"currency", currency:"USD"});
+}
 
 function render(){
- const mf=document.getElementById("methodFilter").value;
- const q=document.getElementById("search").value.trim();
- const filtered=orders.filter(o=>(mf==="all"||o.method===mf)&&(q===""||String(o.id).includes(q)));
- document.getElementById("queueBody").innerHTML=filtered.map((o,i)=>{
-   return `<tr><td>${i+1}</td><td><strong>#${o.id}</strong></td><td>${o.method}</td><td>${o.items}</td><td>${o.wait} min</td><td><button class="prepare" onclick="prepare(${o.id})">Prepare</button></td></tr>`;
- }).join("");
+  const filtered = applyFilters();
+  const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  if(page > pages) page = pages;
+  const start = (page - 1) * PAGE_SIZE;
+  const slice = filtered.slice(start, start + PAGE_SIZE);
+  const body = document.getElementById("queueBody");
+  if(!slice.length){
+    body.innerHTML = `<tr><td colspan="12"><div class="empty">${orders.length ? "No orders match the current filters." : "Load cafe_pos_data.csv to populate the queue."}</div></td></tr>`;
+  } else {
+    body.innerHTML = slice.map((o,i) => {
+      const items = o.items.map(item => `${item.name} ×${item.qty}`).join("<br>");
+      return `<tr>
+        <td>${start + i + 1}</td>
+        <td><strong>${o.id}</strong>${o.customer ? `<div class="items">${o.customer}</div>` : ""}</td>
+        <td>${o.datetime}</td>
+        <td>${o.day || "—"}</td>
+        <td>${o.location || "—"}</td>
+        <td>${o.channel || "—"}</td>
+        <td>${o.platform || "—"}</td>
+        <td>${o.payment || "—"}</td>
+        <td class="items">${items}</td>
+        <td>${o.itemCount}</td>
+        <td>${money(o.total)}</td>
+        <td><button class="prepare" onclick="prepare('${o.id}')">Prepare</button></td>
+      </tr>`;
+    }).join("");
+  }
+  document.getElementById("pageInfo").textContent = orders.length
+    ? `Showing ${filtered.length ? start + 1 : 0}–${start + slice.length} of ${filtered.length.toLocaleString()} filtered orders`
+    : "No data loaded";
+  document.getElementById("prevPage").disabled = page <= 1;
+  document.getElementById("nextPage").disabled = page >= pages || !filtered.length;
 }
+
 function prepare(id){
- const idx=orders.findIndex(o=>o.id===id);
- if(idx>-1){orders.splice(idx,1);render();}
+  const idx = orders.findIndex(o => o.id === id);
+  if(idx > -1){
+    orders.splice(idx, 1);
+    setStatus(`${orders.length.toLocaleString()} orders remaining · ${sourceName}`, "ok");
+    render();
+  }
 }
-document.querySelectorAll("select,input").forEach(e=>e.addEventListener("input",render));
+
+function clearFilters(){
+  document.getElementById("search").value = "";
+  ["channelFilter","locationFilter","dayFilter","platformFilter","paymentFilter","categoryFilter","itemFilter","countFilter"].forEach(id => {
+    document.getElementById(id).value = "all";
+  });
+  document.getElementById("dateFrom").value = "";
+  document.getElementById("dateTo").value = "";
+  page = 1;
+  render();
+}
+
+async function loadDefaultCsv(){
+  try{
+    const res = await fetch(CSV_PATH, {cache:"no-store"});
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    ingest(await res.text(), CSV_PATH);
+  }catch(err){
+    setStatus("Could not auto-load cafe_pos_data.csv. Use Load CSV, or open this page from a local server.", "error");
+    renderFilters();
+    render();
+  }
+}
+
+document.getElementById("csvFile").addEventListener("change", e => {
+  const file = e.target.files && e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => ingest(String(reader.result), file.name);
+  reader.onerror = () => setStatus("Could not read " + file.name, "error");
+  reader.readAsText(file);
+});
+document.getElementById("clearFilters").addEventListener("click", clearFilters);
+document.getElementById("prevPage").addEventListener("click", () => { page -= 1; render(); });
+document.getElementById("nextPage").addEventListener("click", () => { page += 1; render(); });
+document.querySelectorAll("#filters select, #filters input").forEach(el => {
+  el.addEventListener("input", () => { page = 1; render(); });
+});
 function clock(){document.getElementById("clock").textContent=new Date().toLocaleString([], {dateStyle:"medium",timeStyle:"short"});}
-render();clock();setInterval(clock,1000);
+clock();
+setInterval(clock,1000);
+loadDefaultCsv();
 </script>
 </body>
 </html>
