@@ -261,6 +261,28 @@ The project is intended to use data analytics and visualization tools such as:
 
 ---
 
+# ▶️ Running the Dashboard
+
+The order queue in `beverage_order_prioritization_dashboard.html` loads orders from `cafe_pos_data.csv`. Browsers block that file from loading if you open the HTML directly (`file://`), so serve the project folder from a local server.
+
+From the project directory, run:
+
+```bash
+python3 -m http.server 8765
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8765/beverage_order_prioritization_dashboard.html
+```
+
+The dashboard should show **3,000 orders** and **6,681 line items** from the CSV. You can filter by channel, store location, day of week, delivery platform, payment method, category, item, items in order, date range, or search (order ID, customer, or item).
+
+If you open the HTML file directly, use **Load CSV** and choose `cafe_pos_data.csv`.
+
+---
+
 # 📁 Project Structure
 
 ```text
